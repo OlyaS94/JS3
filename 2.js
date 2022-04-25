@@ -13,7 +13,6 @@ let gameState = {
 }
 
 function log(filePath) {
-    //очистить файл если уже был
     if(filePath) {
         fs.writeFileSync(filePath, "", "utf-8"); 
     }

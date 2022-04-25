@@ -4,18 +4,9 @@ const fs = require('fs');
 
 const rl = readline.createInterface({ input, output });
 
-let gameState = {
-    tryingCounter: 0,
-    userNumber: NaN,
-    minValue: 0,
-    maxValue: 1000,
-    randomNumber: Math.floor(Math.random() * 1000),
-}
-
 function log(filePath) {
-    
     if(filePath) {
-        fs.writeFileSync(filePath, "", "utf-8"); 
+        fs.unlinkSync(filePath); 
     }
 
     return function out(string) {
@@ -31,48 +22,62 @@ function log(filePath) {
     }
 }
 
-function question(logger) {
-    rl.question('введите число или exit ', (input) => {
-        if(input.toLowerCase() === "exit") {
-            rl.close();
-            return;
+
+async function getUserInput() {
+    let promise = new Promise(function(resolve, reject) {
+        let result = null;
+
+        rl.question('Введите число или exit ', (input) => {
+            result = input;
+            rl.pause();
+            return resolve(result); 
+        });  
+    })
+    return await promise;
+}
+
+let gameState = {
+    tryingCounter: 0,
+    userNumber: NaN,
+    minValue: 0,
+    maxValue: 1000,
+    randomNumber: Math.floor(Math.random() * 1000),
+}
+
+
+async function main() {
+    while(true) {
+        let userInput = await getUserInput();
+        if(userInput.toLowerCase() === "exit") {
+            break;
         }
-    
-        let number = parseInt(input);
+
+        let number = parseInt(userInput);
     
         if(isNaN(number) || (number < gameState.minValue || number > gameState.maxValue)) {
-            logger(`Вы ввели не число в интервале ${gameState.minValue}-${gameState.maxValue}. Повторите попытку\n`);
-            rl.pause();
-            question(logger);
+            console.log(`Вы ввели не число в интервале ${gameState.minValue}-${gameState.maxValue}. Повторите попытку\n`);
+            continue;
         }
 
-        logger(`Ваше число: ${number}\n`)
+        console.log(`Ваше число: ${number}\n`)
 
         gameState.tryingCounter++;
-    
         gameState.userNumber = number;
     
         if(number === gameState.randomNumber) {
-            logger(`Вы угадали! за ${gameState.tryingCounter} попыток\n`);
-            rl.close();
-            return;
+            console.log(`Вы угадали! За ${gameState.tryingCounter} попыток\n`);
+            break;
         }
     
         if(number > gameState.randomNumber) {
-            logger("Нужно число меньше\n");
+            console.log("Нужно число меньше\n");
         } else {
-            logger("Нужно число больше\n");
+            console.log("Нужно число больше\n");
         }
-    
-        rl.pause();
-        question(logger)
-    });
+
+    }
+    rl.close();
 }
 
-
-function main() {
-    let logger = log("./protocol");
-    question(logger);
-}
 
 main();
